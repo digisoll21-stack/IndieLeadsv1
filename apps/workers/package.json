@@ -1,0 +1,25 @@
+{
+    "name": "@indieleads/workers",
+    "version": "1.0.0",
+    "private": true,
+    "scripts": {
+        "build": "nest build",
+        "start": "node dist/main"
+    },
+    "dependencies": {
+        "@nestjs/common": "^11.0.0",
+        "@nestjs/config": "^4.0.0",
+        "@nestjs/core": "^11.0.0",
+        "bullmq": "^5.0.0",
+        "ioredis": "^5.4.0",
+        "nodemailer": "^8.0.1",
+        "imap-simple": "^5.1.0",
+        "mailparser": "^3.9.3",
+        "reflect-metadata": "^0.2.0",
+        "rxjs": "^7.8.0",
+        "uuid": "^11.0.0"
+    },
+    "devDependencies": {
+        "typescript": "^5.7.0"
+    }
+}

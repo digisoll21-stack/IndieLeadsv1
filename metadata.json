@@ -1,0 +1,8 @@
+{
+  "name": "IndieLeads",
+  "description": "The elite cold email automation platform for high-growth SDR teams.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}

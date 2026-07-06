@@ -1,0 +1,16 @@
+node_modules
+npm-debug.log
+dist
+.env
+.env.local
+.git
+.gitignore
+*.md
+Dockerfile
+docker-compose*
+apps/web/dist
+apps/api/dist
+apps/workers/dist
+packages/*/dist
+.vscode
+.idea

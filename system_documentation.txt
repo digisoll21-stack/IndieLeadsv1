@@ -1,0 +1,114 @@
+INDIELEADS ENTERPRISE - IN-DEPTH SYSTEM DOCUMENTATION
+===================================================
+
+1. PROJECT OVERVIEW
+-------------------
+IndieLeads Enterprise is a high-performance, multi-tenant Cold Email SaaS platform designed for high-volume outreach, deliverability optimization, and automated lead sequencing. It is built using a modern, scalable micro-service architecture that separates the API, the User Interface, and the heavy-lift Background Processors (Workers).
+
+2. TECH STACK (PER MODULE)
+--------------------------
+
+A. WEB FRONTEND (apps/web)
+   - Core: React 18
+   - Build Tool: Vite
+   - Styling: Tailwind CSS & Framer Motion (for animations)
+   - State/Navigation: React Router Dom v6
+   - Charts: Recharts
+   - API Client: Axios
+
+B. API BACKEND (apps/api)
+   - Framework: NestJS (Enterprise-grade Node.js framework)
+   - Database ORM: Prisma
+   - Validation: Class-validator & Zod
+   - Task Distribution: BullMQ (Redis-based)
+   - Security: JWT-based Auth, Bcrypt hashing, Throttling (Rate Limiting)
+
+C. BACKGROUND WORKERS (apps/workers)
+   - Framework: NestJS
+   - Queue System: BullMQ
+   - Email Protocols: Nodemailer (SMTP), Imap-simple (Incoming), Mailparser
+   - Task Processing: Distributed worker nodes
+
+D. INFRASTRUCTURE & SHARED
+   - Database: PostgreSQL (Relational storage for structured data)
+   - Queue/Cache: Redis (For BullMQ task state and ephemeral caching)
+   - Shared Logic: Internal packages/shared for common types and utilities
+   - Runtime: Docker (Containerization for all environments)
+
+3. MODULE RESPONSIBILITIES
+--------------------------
+
+- apps/api:
+  - The "Brain" of the system.
+  - Exposes REST endpoints for the frontend.
+  - Manages Workspaces, User Authentication, Campaign configurations, and Lead imports.
+  - Orchestrates the "Sequencer" which identifies which leads are ready for their next email step.
+  - Pushes tasks into the Redis Queue for workers to consume.
+
+- apps/web:
+  - The "Face" of the system.
+  - Provides a dashboard for users to visualize analytics.
+  - Campaign creation wizard (Stepper).
+  - List management (Leads/Inboxes).
+  - Admin controls for team/profile settings.
+
+- apps/workers:
+  - The "Hands" of the system.
+  - SendingProcessor: Consumes "send-mail" jobs, performs variable replacement (e.g., {{firstName}}), injects tracking pixels, and sends via the specific Inbox's SMTP settings.
+  - WarmupProcessor: Simulates human-like email activity to build domain reputation.
+  - FetchProcessor: Connects via IMAP to check for replies or bounces, updating lead status in real-time.
+
+4. SYSTEM ARCHITECTURE & WORKFLOW
+----------------------------------
+1. USER ACTION: User creates a campaign in `web`.
+2. DATABASE: `api` saves campaign steps and leads to `PostgreSQL`.
+3. SCHEDULING: The `SequencerService` runs periodically (e.g., every 5-10 mins) and queries the DB for leads that have waited the required amount of time.
+4. QUEUING: `api` pushes a "job" into `Redis` containing the Lead ID and Inbox ID.
+5. EXECUTION: A `worker` (which could be running on a completely different server) picks up the job.
+6. TRACKING: The worker appends an 1x1 invisible pixel to the email. When the lead opens it, a request hits the `api/tracking` endpoint, updating the analytics.
+
+5. CAPACITY & SCALING
+---------------------
+
+- CURRENT CAPACITY (Standard Instance):
+  - Database: ~500,000 leads per database instance (standard tier).
+  - Workers: ~100 emails/minute per single-core worker node (limited by SMTP handshake latency).
+  - Redis: ~10k concurrent jobs in queue.
+
+- HOW TO BOOST CAPACITY (Scaling):
+  - HORIZONTAL SCALING (Workers): You can spin up 10, 20, or 100 separate "Worker" containers. They all connect to the same Redis instance and pull jobs. This is how you send 1 Million emails a day.
+  - VERTICAL SCALING (Database): Upgrade PostgreSQL to a higher tier (more RAM/CPU) to handle heavy analytics queries.
+  - REDIS TUNING: Use a cluster-aware Redis if the job volume exceeds 100k concurrent tasks.
+
+6. DEPLOYMENT PROCEDURES
+------------------------
+
+A. THE "API" (apps/api)
+   - Platform: Render or Fly.io
+   - Requirements: Database URL (Postgres), Redis URL.
+   - Command: `npm run build:api && npm run start:api`
+
+B. THE "WORKERS" (apps/workers)
+   - Platform: Fly.io (Recommended for 24/7 background tasks)
+   - Requirements: Must have access to the same Database and Redis as the API.
+   - Command: `npm run build:workers && npm run start:workers`
+
+C. THE "WEB" (apps/web)
+   - Platform: Vercel, Netlify, or Render Static Sites.
+   - Requirement: VITE_API_URL pointing to the deployed API.
+   - Command: `npm run build:web` then serve the `dist/` folder.
+
+D. ENVIRONMENT VARIABLES (The .env file)
+   - DATABASE_URL: Prisma connection string.
+   - REDIS_URL: BullMQ connection.
+   - JWT_SECRET: For auth token signing.
+   - FRONTEND_URL: For CORS and unsubscribe link generation.
+
+7. DESIGN DECISIONS (THE "WHY")
+-------------------------------
+- Why BullMQ/Redis? Because sending emails is slow. You cannot wait for an SMTP response during an API request. Queuing ensures the user feels a "fast" UI while the work happens in the background.
+- Why Separation? If the API crashes, the Workers keep sending. If the Workers are overloaded, the API stays responsive for users to check their stats.
+- Why Ethereal Theme? Solopreneurs/Freelancers prefer a "Premium SaaS" minimalist look over a "Control Panel" look. It builds trust.
+
+===================================================
+END OF DOCUMENTATION

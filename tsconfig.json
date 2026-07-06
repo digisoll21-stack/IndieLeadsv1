@@ -1,0 +1,42 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ESNext",
+    "moduleResolution": "node",
+    "jsx": "react-jsx", // ✅ Enable JSX support
+    "declaration": true,
+    "removeComments": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "strict": false,
+    "noImplicitAny": false,
+    "strictPropertyInitialization": false,
+    "incremental": true,
+    "baseUrl": "./",
+    "paths": {
+      "@shared/*": [
+        "packages/shared/*"
+      ],
+      "@api/*": [
+        "apps/api/src/*"
+      ]
+    },
+    "outDir": "./dist",
+    "noFallthroughCasesInSwitch": false,
+    "strictBindCallApply": false,
+    "useDefineForClassFields": false
+  },
+  "include": [
+    "apps/**/*",
+    "packages/**/*",
+    "prisma/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
+}

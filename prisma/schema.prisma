@@ -1,0 +1,327 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  USER
+  SUPER_ADMIN
+}
+
+model User {
+  id            String     @id @default(uuid())
+  email         String     @unique
+  passwordHash  String
+  firstName     String
+  lastName      String
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  role          Role       @default(USER)
+  isBanned      Boolean    @default(false)
+  
+  // Lifecycle & Trust
+  emailVerifiedAt     DateTime?
+  verificationToken   String?   @unique
+  resetToken          String?   @unique
+  resetTokenExpires   DateTime?
+
+  memberships   Member[]
+  auditLogs     AuditLog[]
+}
+
+model Workspace {
+  id            String     @id @default(uuid())
+  name          String
+  slug          String     @unique
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  members       Member[]
+  campaigns     Campaign[]
+  inboxes       Inbox[]
+  domains       Domain[]
+  leads         Lead[]
+  sendingLogs   SendingLog[]
+  replyLogs     ReplyLog[]
+  bounceLogs    BounceLog[]
+  plan          String     @default("grow") // launch, grow, pro
+  subscriptionStatus String  @default("active") // active, trialing, past_due, canceled
+  auditLogs     AuditLog[]
+  notifications Notification[]
+  deliverabilityTests DeliverabilityTest[]
+  warmupAccounts WarmupAccount[]
+  sequenceSteps  SequenceStep[]
+  trackingLogs   TrackingLog[]
+}
+
+model Member {
+  id          String    @id @default(uuid())
+  userId      String?
+  workspaceId String
+  role        String    @default("member")
+  inviteToken String?   @unique
+  inviteExpires DateTime?
+  user        User?     @relation(fields: [userId], references: [id])
+  workspace   Workspace @relation(fields: [workspaceId], references: [id])
+  @@unique([userId, workspaceId])
+}
+
+model Domain {
+  id             String    @id @default(uuid())
+  workspaceId    String
+  domainName     String
+  isVerified     Boolean   @default(false)
+  spfValid       Boolean   @default(false)
+  dkimValid      Boolean   @default(false)
+  dmarcValid     Boolean   @default(false)
+  isTracking     Boolean   @default(false)
+  lastVerifiedAt DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  workspace      Workspace @relation(fields: [workspaceId], references: [id])
+  inboxes        Inbox[]
+}
+
+model Inbox {
+  id               String     @id @default(uuid())
+  workspaceId      String
+  domainId         String
+  email            String     @unique
+  fromName         String?
+  provider         String
+  credentials      String     @db.Text
+  status           String     @default("active")
+  dailyLimit       Int        @default(50)
+  hourlyLimit      Int        @default(12)
+  warmupEnabled    Boolean    @default(false)
+  lastReplyCheckAt DateTime?
+  lastImapSync     DateTime?
+  minDelaySeconds  Int        @default(60)
+  maxDelaySeconds  Int        @default(300)
+  signature        String?    @db.Text
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+  workspace        Workspace  @relation(fields: [workspaceId], references: [id])
+  domain           Domain     @relation(fields: [domainId], references: [id])
+  warmupAccount    WarmupAccount?
+  sendingLogs      SendingLog[]
+  bounceLogs       BounceLog[]
+  replyLogs        ReplyLog[]
+  deliverabilityTests DeliverabilityTest[]
+  @@index([workspaceId])
+  @@index([status])
+}
+
+model WarmupAccount {
+  id                String    @id @default(uuid())
+  workspaceId       String
+  inboxId           String    @unique
+  dailyLimit        Int       @default(50)
+  rampUpPerDay      Int       @default(5)
+  todaySent         Int       @default(0)
+  lastSentDate      DateTime?
+  totalSent         Int       @default(0)
+  totalReceived     Int       @default(0)
+  reputationScore   Int       @default(100)
+  createdAt         DateTime  @default(now())
+  inbox             Inbox     @relation(fields: [inboxId], references: [id])
+  workspace         Workspace @relation(fields: [workspaceId], references: [id])
+  @@index([workspaceId])
+}
+
+model Lead {
+  id                String     @id @default(uuid())
+  workspaceId       String
+  campaignId        String?
+  email             String
+  firstName         String?
+  lastName          String?
+  company           String?
+  status            String     @default("unassigned")
+  tags              String[]
+  customFields      Json?
+  lastEventAt       DateTime?
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+  workspace         Workspace  @relation(fields: [workspaceId], references: [id])
+  campaign          Campaign?   @relation(fields: [campaignId], references: [id])
+  @@unique([email, campaignId])
+  @@index([workspaceId])
+  @@index([campaignId])
+  @@index([status])
+  @@index([email])
+  sendingLogs  SendingLog[]
+  bounceLogs   BounceLog[]
+  replyLogs    ReplyLog[]
+}
+
+model Campaign {
+  id          String     @id @default(uuid())
+  workspaceId String
+  name        String
+  status      String     @default("draft")
+  settings    Json
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  workspace   Workspace  @relation(fields: [workspaceId], references: [id])
+  sequences   SequenceStep[]
+  leads       Lead[]
+  sendingLogs SendingLog[]
+  bounceLogs  BounceLog[]
+  replyLogs   ReplyLog[]
+  @@index([workspaceId])
+  @@index([status])
+}
+
+model SequenceStep {
+  id          String    @id @default(uuid())
+  workspaceId String
+  campaignId  String
+  order       Int
+  subject     String
+  body        String    @db.Text
+  delayDays   Int       @default(0)
+  waitMinutes Int       @default(0)
+  scheduledDate DateTime?
+  specificStartTime String? // HH:mm format
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  campaign    Campaign  @relation(fields: [campaignId], references: [id])
+  workspace   Workspace @relation(fields: [workspaceId], references: [id])
+  @@index([campaignId])
+  @@index([workspaceId])
+}
+
+model SendingLog {
+  id           String    @id @default(uuid())
+  workspaceId  String
+  campaignId   String
+  inboxId      String
+  leadId       String
+  stepId       String?   // Tracks which sequence step this relates to
+  status       String    // sent, failed, bounced, skipped
+  sentAt       DateTime?
+  errorMessage String?
+  createdAt    DateTime  @default(now())
+  workspace    Workspace @relation(fields: [workspaceId], references: [id])
+  campaign     Campaign  @relation(fields: [campaignId], references: [id])
+  inbox        Inbox     @relation(fields: [inboxId], references: [id])
+  lead         Lead      @relation(fields: [leadId], references: [id])
+  bounceLogs   BounceLog[]
+  replyLogs    ReplyLog[]
+  @@index([workspaceId, sentAt])
+  @@index([campaignId])
+  @@index([inboxId])
+  @@index([leadId])
+}
+
+model BounceLog {
+  id           String    @id @default(uuid())
+  workspaceId  String
+  campaignId   String
+  inboxId      String
+  leadId       String
+  sendingLogId String?
+  type         String    // hard, soft, spam
+  rawReason    String?   @db.Text
+  createdAt    DateTime  @default(now())
+  workspace    Workspace @relation(fields: [workspaceId], references: [id])
+  campaign     Campaign  @relation(fields: [campaignId], references: [id])
+  inbox        Inbox     @relation(fields: [inboxId], references: [id])
+  lead         Lead      @relation(fields: [leadId], references: [id])
+  sendingLog   SendingLog? @relation(fields: [sendingLogId], references: [id])
+  @@index([workspaceId, createdAt])
+  @@index([campaignId])
+  @@index([inboxId])
+}
+
+model ReplyLog {
+  id             String    @id @default(uuid())
+  workspaceId    String
+  leadId         String
+  campaignId     String
+  inboxId        String
+  subject        String
+  body           String    @db.Text
+  classification String?
+  receivedAt     DateTime  @default(now())
+  messageId      String?   @unique
+  sendingLogId   String?
+  workspace      Workspace @relation(fields: [workspaceId], references: [id])
+  campaign       Campaign  @relation(fields: [campaignId], references: [id])
+  inbox          Inbox     @relation(fields: [inboxId], references: [id])
+  lead           Lead      @relation(fields: [leadId], references: [id])
+  sendingLog     SendingLog? @relation(fields: [sendingLogId], references: [id])
+  @@index([workspaceId, receivedAt])
+  @@index([campaignId])
+  @@index([inboxId])
+}
+
+model AuditLog {
+  id           String    @id @default(uuid())
+  workspaceId  String
+  userId       String?
+  userEmail    String
+  action       String
+  entityType   String
+  entityId     String
+  changes      Json?
+  ipAddress    String?
+  createdAt    DateTime  @default(now())
+  workspace    Workspace @relation(fields: [workspaceId], references: [id])
+  user         User?     @relation(fields: [userId], references: [id])
+  @@index([workspaceId, createdAt])
+  @@index([entityId])
+}
+
+model Notification {
+  id          String    @id @default(uuid())
+  workspaceId String
+  type        String    // bounce_spike, disconnected, etc.
+  severity    String    // info, warning, critical
+  title       String
+  message     String    @db.Text
+  isRead      Boolean   @default(false)
+  metadata    Json?
+  createdAt   DateTime  @default(now())
+  workspace   Workspace @relation(fields: [workspaceId], references: [id])
+  @@index([workspaceId, isRead])
+}
+
+model DeliverabilityTest {
+  id              String    @id @default(uuid())
+  workspaceId     String
+  inboxId         String
+  status          String    @default("completed")
+  score           Int
+  placement       Json      // { gmail: string, outlook: string, ... }
+  dnsHealth       Json      // { spf: boolean, dkim: boolean, dmarc: boolean }
+  recommendations String[]
+  subject         String?
+  body            String?   @db.Text
+  createdAt       DateTime  @default(now())
+  workspace       Workspace @relation(fields: [workspaceId], references: [id])
+  inbox           Inbox?    @relation(fields: [inboxId], references: [id])
+  @@index([workspaceId])
+  @@index([inboxId])
+}
+
+model TrackingLog {
+  id          String    @id @default(uuid())
+  workspaceId String
+  leadId      String
+  campaignId  String
+  logId       String
+  type        String    // open, click
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime  @default(now())
+  workspace   Workspace @relation(fields: [workspaceId], references: [id])
+
+  @@index([workspaceId])
+  @@index([campaignId])
+  @@index([logId])
+}

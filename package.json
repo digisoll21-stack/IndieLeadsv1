@@ -1,0 +1,67 @@
+{
+  "name": "indieleads",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:web": "cd apps/web && npm install && npm run dev",
+    "dev": "cd apps/api && npm run start:dev",
+    "dev:api": "cd apps/api && npm run start:dev",
+    "dev:workers": "cd apps/workers && npm run start",
+    "build:web": "cd apps/web && npm run build",
+    "build:api": "cd apps/api && nest build",
+    "build:workers": "cd apps/workers && nest build",
+    "build": "npx prisma generate --schema=./prisma/schema.prisma && npm run build:web && npm run build:api && npm run build:workers",
+    "start:api": "node apps/api/dist/main.js",
+    "start:workers": "node apps/workers/dist/main.js",
+    "prisma:push": "npx prisma db push --schema=./prisma/schema.prisma"
+  },
+  "dependencies": {
+    "@google/genai": "^1.40.0",
+    "@nestjs/common": "^11.0.0",
+    "@nestjs/config": "^4.0.0",
+    "@nestjs/core": "^11.0.0",
+    "@nestjs/platform-express": "^11.0.0",
+    "@nestjs/platform-socket.io": "^11.0.0",
+    "@nestjs/websockets": "^11.0.0",
+    "@prisma/client": "^6.2.1",
+    "axios": "^1.7.0",
+    "bcryptjs": "^3.0.3",
+    "bullmq": "^5.0.0",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.1",
+    "dotenv": "^16.4.5",
+    "express": "^5.0.0",
+    "imap-simple": "^5.1.0",
+    "ioredis": "^5.4.0",
+    "mailparser": "^3.9.3",
+    "nodemailer": "^8.0.1",
+    "reflect-metadata": "^0.2.0",
+    "rxjs": "^7.8.0",
+    "socket.io": "^4.7.0",
+    "uuid": "^11.0.0",
+    "@nestjs/serve-static": "^5.0.0"
+  },
+  "devDependencies": {
+    "@nestjs/cli": "^11.0.0",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/express": "^5.0.0",
+    "@types/imap-simple": "^4.2.10",
+    "@types/mailparser": "^3.4.6",
+    "@types/node": "^22.0.0",
+    "@types/nodemailer": "^6.4.17",
+    "prisma": "^6.2.1",
+    "source-map-support": "^0.5.21",
+    "ts-loader": "^9.5.0",
+    "tsconfig-paths": "^4.2.0",
+    "typescript": "^5.7.0",
+    "vite": "^7.3.1",
+    "@fastify/static": "^8.0.0"
+  },
+  "optionalDependencies": {
+    "@rollup/rollup-linux-x64-gnu": "*"
+  }
+}

@@ -1,0 +1,22 @@
+# fly.toml app configuration file generated for indieleads-workers on 2026-03-01T14:40:21+06:00
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = 'indieleads-workers'
+primary_region = 'sin'
+
+[build]
+  dockerfile = 'Dockerfile'
+
+[env]
+  NODE_ENV = 'production'
+
+[processes]
+  app = 'npm run start:workers'
+
+[[vm]]
+  size = 'shared-cpu-1x'
+  memory = '512mb'
+  cpus = 1
+  memory_mb = 512
