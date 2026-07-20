@@ -13,8 +13,9 @@ interface ReplyLog {
   id: string;
   subject: string;
   body: string;
-  classification: 'interested' | 'not_interested' | 'unsubscribe' | 'neutral' | 'out_of_office';
+  classification: 'interested' | 'not_interested' | 'unsubscribe' | 'neutral' | 'out_of_office' | 'check_in_later' | 'objection';
   receivedAt: string;
+  draftReply?: string;
   lead: {
     id: string;
     email: string;
@@ -84,6 +85,9 @@ const MasterInboxPage: React.FC<{ theme: 'ethereal' | 'glass' }> = ({ theme }) =
       case 'interested': return <Smile className="text-emerald-500" size={16} />;
       case 'not_interested': return <Frown className="text-rose-500" size={16} />;
       case 'unsubscribe': return <AlertCircle className="text-amber-500" size={16} />;
+      case 'out_of_office': return <Clock className="text-sky-500" size={16} />;
+      case 'check_in_later': return <Clock className="text-purple-500" size={16} />;
+      case 'objection': return <AlertCircle className="text-rose-500" size={16} />;
       default: return <Clock className="text-slate-400" size={16} />;
     }
   };
@@ -225,6 +229,32 @@ const MasterInboxPage: React.FC<{ theme: 'ethereal' | 'glass' }> = ({ theme }) =
             </div>
 
             <div className="p-4 lg:p-8 border-t border-white/5">
+              {selectedReply.draftReply && (
+                <div className={`mb-6 p-6 rounded-[1.5rem] border flex flex-col items-start gap-4 transition-all ${
+                  isEthereal
+                    ? 'bg-emerald-50/40 border-emerald-100/50 text-slate-700'
+                    : 'bg-cyan-500/5 border-cyan-500/10 text-slate-300'
+                }`}>
+                  <div className="flex items-center space-x-3">
+                    <span className={`px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider ${
+                      isEthereal ? 'bg-emerald-500/10 text-[#064e3b]' : 'bg-[#00E5FF]/10 text-[#00E5FF]'
+                    }`}>
+                      AI Suggestion
+                    </span>
+                    <span className="text-[10px] font-bold text-slate-500">Formulated via Workspace Knowledge Base</span>
+                  </div>
+                  <p className="text-xs font-semibold leading-relaxed whitespace-pre-wrap">{selectedReply.draftReply}</p>
+                  <button
+                    onClick={() => setResponseText(selectedReply.draftReply || '')}
+                    className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 flex items-center gap-2 hover:opacity-90 ${
+                      isEthereal ? 'bg-[#10b981] text-white shadow-sm' : 'bg-[#00E5FF] text-slate-900 shadow-lg'
+                    }`}
+                  >
+                    <Reply size={12} /> Apply Suggestion
+                  </button>
+                </div>
+              )}
+
               <div className={`p-3 lg:p-4 rounded-[1.5rem] lg:rounded-[2rem] flex flex-col border transition-all focus-within:ring-2 ${isEthereal ? 'bg-white border-slate-200 ring-emerald-100' : 'bg-black/20 border-white/5 ring-cyan-500/20'
                 }`}>
                 <textarea

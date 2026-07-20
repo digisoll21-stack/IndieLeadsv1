@@ -55,6 +55,7 @@ model Workspace {
   warmupAccounts WarmupAccount[]
   sequenceSteps  SequenceStep[]
   trackingLogs   TrackingLog[]
+  knowledge      WorkspaceKnowledge?
 }
 
 model Member {
@@ -255,9 +256,19 @@ model ReplyLog {
   inbox          Inbox     @relation(fields: [inboxId], references: [id])
   lead           Lead      @relation(fields: [leadId], references: [id])
   sendingLog     SendingLog? @relation(fields: [sendingLogId], references: [id])
+  draftReply     String?   @db.Text
   @@index([workspaceId, receivedAt])
   @@index([campaignId])
   @@index([inboxId])
+}
+
+model WorkspaceKnowledge {
+  id          String    @id @default(uuid())
+  workspaceId String    @unique
+  content     String    @db.Text
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  workspace   Workspace @relation(fields: [workspaceId], references: [id])
 }
 
 model AuditLog {

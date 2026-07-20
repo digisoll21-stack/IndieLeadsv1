@@ -106,10 +106,10 @@ export class SequencerService {
         const leads = await (this.prisma as any).lead.findMany({
             where: {
                 campaignId: campaign.id,
-                // CRITICAL: Only process leads that are still in 'active' lifecycle states
+                // CRITICAL: Only process leads that are active or temporarily snoozed (out_of_office, check_in_later)
                 status: {
-                    in: ['pending', 'sent', 'opened', 'clicked'],
-                    notIn: ['replied', 'unsubscribed', 'bounced', 'spam_complaint']
+                    in: ['pending', 'sent', 'opened', 'clicked', 'out_of_office', 'check_in_later'],
+                    notIn: ['replied', 'unsubscribed', 'bounced', 'spam_complaint', 'objection']
                 },
             },
             include: {
@@ -142,8 +142,26 @@ export class SequencerService {
     private async evaluateLeadProgression(lead: any, campaign: any): Promise<void> {
         // 0. Double-check Stop on Reply
         const stopOnReply = campaign.settings?.stopOnReply ?? true;
-        if (stopOnReply && (lead.status === 'replied' || lead.status === 'unsubscribed')) {
+        if (stopOnReply && (lead.status === 'replied' || lead.status === 'unsubscribed' || lead.status === 'objection')) {
             return;
+        }
+
+        // 0.5. Evaluate snooze timer for out_of_office and check_in_later leads
+        const customFields = (lead.customFields as Record<string, any>) || {};
+        if (customFields.snoozeUntil) {
+            const snoozeUntilDate = new Date(customFields.snoozeUntil);
+            if (new Date() < snoozeUntilDate) {
+                return; // Lead is still snoozed, skip progression
+            }
+            // Snooze time elapsed! Clean the snooze timer and resume lead sequencing
+            delete customFields.snoozeUntil;
+            await (this.prisma as any).lead.update({
+                where: { id: lead.id },
+                data: {
+                    status: 'sent', // Reset back to sent status so sequencer handles next steps
+                    customFields: Object.keys(customFields).length > 0 ? customFields : null,
+                }
+            });
         }
 
         const lastLog = lead.sendingLogs[0];

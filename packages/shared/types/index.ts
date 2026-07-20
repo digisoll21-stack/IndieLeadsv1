@@ -26,7 +26,10 @@ export enum LeadStatus {
   BOUNCED = 'bounced',
   UNSUBSCRIBED = 'unsubscribed',
   SPAM_COMPLAINT = 'spam_complaint',
-  PAUSED = 'paused'
+  PAUSED = 'paused',
+  OUT_OF_OFFICE = 'out_of_office',
+  CHECK_IN_LATER = 'check_in_later',
+  OBJECTION = 'objection'
 }
 
 export enum NotificationType {
@@ -75,7 +78,7 @@ export enum BounceType {
   SPAM = 'spam',
 }
 
-export type ReplyCategory = 'interested' | 'not_interested' | 'unsubscribe' | 'neutral' | 'out_of_office';
+export type ReplyCategory = 'interested' | 'not_interested' | 'unsubscribe' | 'neutral' | 'out_of_office' | 'check_in_later' | 'objection';
 
 export interface Workspace {
   id: string;

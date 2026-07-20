@@ -37,13 +37,27 @@ export class SendingProcessor implements OnModuleInit {
   async process(job: Job) {
     const { logId, inboxId, leadId, email, trackOpens = true, trackClicks = false } = job.data;
 
-    const hasLock = await this.lockService.acquireLock(inboxId, 30);
-    if (!hasLock) throw new Error('Inbox locked by another worker');
+    const hasInboxLock = await this.lockService.acquireLock(inboxId, 30);
+    if (!hasInboxLock) throw new Error('Inbox locked by another worker');
+
+    const hasLeadLock = await this.lockService.acquireLock(`send:lead:${leadId}`, 60);
+    if (!hasLeadLock) {
+      await this.lockService.releaseLock(inboxId);
+      this.logger.warn(`Lead ${leadId} is currently locked by another sending process. Skipping job.`);
+      return;
+    }
 
     try {
       const inbox = await this.prisma.inbox.findUnique({ where: { id: inboxId } });
       if (!inbox || inbox.status !== 'active') {
         this.logger.warn(`Inbox ${inboxId} is not active. Skipping job ${job.id}`);
+        return;
+      }
+
+      // CRITICAL: Check if sendingLog is already processed (sent/skipped/failed) to prevent duplicate sends
+      const sendingLog = await this.prisma.sendingLog.findUnique({ where: { id: logId } });
+      if (!sendingLog || sendingLog.status !== 'pending') {
+        this.logger.warn(`SendingLog ${logId} is not pending (Status: ${sendingLog?.status}). Skipping job.`);
         return;
       }
 
@@ -148,7 +162,10 @@ export class SendingProcessor implements OnModuleInit {
 
       throw err; // Re-queue if transient
     } finally {
-      await this.lockService.releaseLock(inboxId);
+      await Promise.all([
+        this.lockService.releaseLock(inboxId),
+        this.lockService.releaseLock(`send:lead:${leadId}`),
+      ]);
     }
   }
 }

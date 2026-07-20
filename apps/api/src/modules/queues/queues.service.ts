@@ -9,6 +9,7 @@ export enum JobType {
   FETCH_REPLIES = 'fetchReplies',
   TRACK_OPEN = 'trackOpen',
   SEQUENCE_CAMPAIGN = 'sequenceCampaign',
+  INBOX_SYNC = 'inboxSync',
 }
 
 @Injectable()
@@ -31,7 +32,14 @@ export class QueuesService implements OnModuleInit {
     const redisUrl = this.configService.get<string>('REDIS_URL') || 'redis://localhost:6379';
     const connection = { url: redisUrl };
 
-    const queueNames = ['email_sending_queue', 'warmup_queue', 'reply_fetch_queue', 'tracking_queue', 'campaign_sequencing_queue'];
+    const queueNames = [
+      'email_sending_queue',
+      'warmup_queue',
+      'reply_fetch_queue',
+      'tracking_queue',
+      'campaign_sequencing_queue',
+      'inbox_sync_queue',
+    ];
 
     for (const name of queueNames) {
       const queue = new Queue(name, {
@@ -65,6 +73,12 @@ export class QueuesService implements OnModuleInit {
     return queue.add(JobType.FETCH_REPLIES, data, {
       repeat: { pattern: '*/15 * * * *' } // Every 15 minutes
     });
+  }
+
+  async addInboxSyncJob(data: { inboxId: string; workspaceId: string }, delayMs: number = 0) {
+    const queue = this.queues.get('inbox_sync_queue');
+    if (!queue) return;
+    return queue.add(JobType.INBOX_SYNC, data, { delay: delayMs });
   }
 
   async addSequencingJob() {
