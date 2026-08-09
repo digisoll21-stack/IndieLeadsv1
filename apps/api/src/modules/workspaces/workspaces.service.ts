@@ -42,10 +42,8 @@ export class WorkspacesService {
 
   async findByIdForUser(workspaceId: string, userId: string) {
     // Fix: Access 'member' with type assertion to resolve Prisma member resolution issues
-    const member = await (this.prisma as any).member.findUnique({
-      where: {
-        userId_workspaceId: { userId, workspaceId }
-      }
+    const member = await (this.prisma as any).member.findFirst({
+      where: { userId, workspaceId }
     });
 
     if (!member) throw new ForbiddenException('Access denied to workspace');

@@ -20,8 +20,8 @@ export class InvitesController {
         @CurrentUser() user: any
     ) {
         // 1. Verify user is a member of this workspace
-        const member = await this.prisma.member.findUnique({
-            where: { userId_workspaceId: { userId: user.id, workspaceId } }
+        const member = await this.prisma.member.findFirst({
+            where: { userId: user.id, workspaceId }
         });
 
         if (!member) throw new ForbiddenException('You are not a member of this workspace');
@@ -77,8 +77,8 @@ export class InvitesController {
         }
 
         // 4. Check if user is ALREADY in the workspace (via a different record)
-        const existingMembership = await this.prisma.member.findUnique({
-            where: { userId_workspaceId: { userId: user.id, workspaceId: pendingMember.workspaceId } }
+        const existingMembership = await this.prisma.member.findFirst({
+            where: { userId: user.id, workspaceId: pendingMember.workspaceId }
         });
 
         if (existingMembership) {
