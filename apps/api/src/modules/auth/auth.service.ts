@@ -8,6 +8,7 @@ import { LoginDto, RegisterDto } from './dto/auth.dto';
 import { SecurityService } from '../security/security.service';
 import { TransactionalEmailService } from '../notifications/transactional-email.service';
 import { ConfigService } from '@nestjs/config';
+import { PrismaService } from '../prisma/prisma.service';
 import * as crypto from 'crypto';
 import { Buffer } from 'buffer';
 import axios from 'axios';
@@ -23,6 +24,7 @@ export class AuthService {
     private readonly securityService: SecurityService,
     private readonly configService: ConfigService,
     private readonly transactionalEmailService: TransactionalEmailService,
+    private readonly prisma: PrismaService,
   ) { }
 
   async register(dto: RegisterDto) {
