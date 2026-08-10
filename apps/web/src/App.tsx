@@ -8,6 +8,7 @@ import DashboardPage from './pages/DashboardPage';
 import CampaignsPage from './pages/CampaignsPage';
 import CampaignEditorPage from './pages/CampaignEditorPage';
 import LeadsPage from './pages/LeadsPage';
+import CrmPage from './pages/CrmPage';
 import InboxesPage from './pages/InboxesPage';
 import WarmupPage from './pages/WarmupPage';
 import AnalyticsPage from './pages/AnalyticsPage';
@@ -163,6 +164,7 @@ const AppContent: React.FC = () => {
                   <Route path="/campaigns" element={<PageTransition><CampaignsPage theme={theme} /></PageTransition>} />
                   <Route path="/campaigns/:id" element={<PageTransition><CampaignEditorPage theme={theme} /></PageTransition>} />
                   <Route path="/leads" element={<PageTransition><LeadsPage theme={theme} /></PageTransition>} />
+                  <Route path="/crm" element={<PageTransition><CrmPage theme={theme} /></PageTransition>} />
                   <Route path="/replies" element={<PageTransition><RepliesPage theme={theme} /></PageTransition>} />
                   <Route path="/inboxes" element={<PageTransition><InboxesPage theme={theme} /></PageTransition>} />
                   <Route path="/warmup" element={<PageTransition><WarmupPage theme={theme} /></PageTransition>} />

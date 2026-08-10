@@ -162,6 +162,10 @@ export interface Lead {
   firstName?: string;
   lastName?: string;
   company?: string;
+  companyId?: string;
+  title?: string;
+  phone?: string;
+  linkedinUrl?: string;
   status: LeadStatus;
   tags: string[];
   customFields: Record<string, string>;
@@ -169,6 +173,32 @@ export interface Lead {
   workspaceId: string;
   currentCampaignId?: string;
   currentStepOrder?: number;
+}
+
+export type DealStage = 'prospect' | 'contacted' | 'discovery' | 'proposal' | 'closed_won' | 'closed_lost';
+
+export interface CompanyNote {
+  id: string;
+  companyId: string;
+  authorName: string;
+  content: string;
+  createdAt: Date;
+}
+
+export interface Company {
+  id: string;
+  workspaceId: string;
+  name: string;
+  domain?: string;
+  website?: string;
+  industry?: string;
+  employeeCount?: number;
+  dealStage: DealStage;
+  dealValue?: number;
+  createdAt: Date;
+  updatedAt: Date;
+  stakeholders?: Lead[];
+  notes?: CompanyNote[];
 }
 
 export interface ReplyLog {

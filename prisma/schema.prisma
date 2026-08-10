@@ -56,6 +56,7 @@ model Workspace {
   sequenceSteps  SequenceStep[]
   trackingLogs   TrackingLog[]
   knowledge      WorkspaceKnowledge?
+  companies      Company[]
 }
 
 model Member {
@@ -137,10 +138,14 @@ model Lead {
   id                String     @id @default(uuid())
   workspaceId       String
   campaignId        String?
+  companyId         String?
   email             String
   firstName         String?
   lastName          String?
   company           String?
+  title             String?
+  phone             String?
+  linkedinUrl       String?
   status            String     @default("unassigned")
   tags              String[]
   customFields      Json?
@@ -148,10 +153,12 @@ model Lead {
   createdAt         DateTime   @default(now())
   updatedAt         DateTime   @updatedAt
   workspace         Workspace  @relation(fields: [workspaceId], references: [id])
-  campaign          Campaign?   @relation(fields: [campaignId], references: [id])
+  campaign          Campaign?  @relation(fields: [campaignId], references: [id])
+  companyRecord     Company?   @relation(fields: [companyId], references: [id])
   @@unique([email, campaignId])
   @@index([workspaceId])
   @@index([campaignId])
+  @@index([companyId])
   @@index([status])
   @@index([email])
   sendingLogs  SendingLog[]
@@ -335,4 +342,35 @@ model TrackingLog {
   @@index([workspaceId])
   @@index([campaignId])
   @@index([logId])
+}
+
+model Company {
+  id            String        @id @default(uuid())
+  workspaceId   String
+  name          String
+  domain        String?
+  website       String?
+  industry      String?
+  employeeCount Int?
+  dealStage     String        @default("prospect") // prospect, contacted, discovery, proposal, closed_won, closed_lost
+  dealValue     Float?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  workspace     Workspace     @relation(fields: [workspaceId], references: [id])
+  stakeholders  Lead[]
+  notes         CompanyNote[]
+
+  @@index([workspaceId])
+  @@index([dealStage])
+}
+
+model CompanyNote {
+  id          String   @id @default(uuid())
+  companyId   String
+  authorName  String   @default("Team Member")
+  content     String   @db.Text
+  createdAt   DateTime @default(now())
+  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId])
 }

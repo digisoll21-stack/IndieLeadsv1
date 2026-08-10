@@ -13,7 +13,8 @@ import {
   Settings,
   History,
   Bell,
-  HelpCircle
+  HelpCircle,
+  Building2
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -29,6 +30,7 @@ const Sidebar: React.FC<SidebarProps> = ({ workspace, onClose, theme }) => {
     { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
     { icon: Megaphone, label: 'Campaigns', path: '/campaigns' },
     { icon: Users, label: 'Leads', path: '/leads' },
+    { icon: Building2, label: 'Account CRM', path: '/crm' },
     { icon: Mail, label: 'Smart Inbox', path: '/replies' },
     { icon: Inbox, label: 'Email Accounts', path: '/inboxes' },
     { icon: Flame, label: 'Warmup', path: '/warmup' },

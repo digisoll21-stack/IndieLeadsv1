@@ -28,6 +28,7 @@ import { HealthController } from './modules/health/health.controller';
 import { AppController } from './app.controller';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { AdminModule } from './modules/admin/admin.module';
+import { CompaniesModule } from './modules/companies/companies.module';
 
 @Module({
   imports: [
@@ -43,6 +44,7 @@ import { AdminModule } from './modules/admin/admin.module';
     DomainsModule,
     QueuesModule,
     LeadsModule,
+    CompaniesModule,
     CampaignsModule,
     TrackingModule,
     BouncesModule,
