@@ -37,6 +37,9 @@ services:
 
   # High-throughput Workers (Campaign sending)
   worker-sending:
+    build:
+      context: .
+      dockerfile: Dockerfile
     image: indieleads-app:latest
     command: npm run start:workers
     env_file: .env.production
@@ -51,6 +54,9 @@ services:
 
   # Reply Sync & AI Workers
   worker-replies:
+    build:
+      context: .
+      dockerfile: Dockerfile
     image: indieleads-app:latest
     command: npm run start:workers
     env_file: .env.production
