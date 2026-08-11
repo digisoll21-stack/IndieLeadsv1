@@ -6,17 +6,22 @@ RUN apt-get update -y && apt-get install -y openssl
 
 WORKDIR /app
 
-# Copy root configurations
+# Copy root configurations & package definitions
 COPY package*.json ./
 COPY tsconfig.json ./
 COPY prisma ./prisma/
+COPY apps/api/package*.json ./apps/api/
+COPY apps/web/package*.json ./apps/web/
+COPY apps/workers/package*.json ./apps/workers/
+
+# Install dependencies (utilizing Docker layer cache)
+RUN npm install --legacy-peer-deps --prefer-offline --no-audit
 
 # Copy application source
 COPY apps ./apps
 COPY packages ./packages
 
-# Install dependencies and build
-RUN npm install --legacy-peer-deps
+# Run build
 RUN npm run build
 
 # STEP 2: Runtime Stage
