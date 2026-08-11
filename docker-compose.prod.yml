@@ -19,6 +19,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    image: indieleads-app:latest
     command: npm run start:api
     ports:
       - "3000:3000"
@@ -36,12 +37,12 @@ services:
 
   # High-throughput Workers (Campaign sending)
   worker-sending:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: indieleads-app:latest
     command: npm run start:workers
     env_file: .env.production
     restart: always
+    depends_on:
+      - api
     deploy:
       replicas: 1 # Scale this to 3-5+ in production for fast sending
       resources:
@@ -50,12 +51,12 @@ services:
 
   # Reply Sync & AI Workers
   worker-replies:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: indieleads-app:latest
     command: npm run start:workers
     env_file: .env.production
     restart: always
+    depends_on:
+      - api
     deploy:
       replicas: 1
       resources:
